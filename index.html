@@ -3,83 +3,285 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>테스트 페이지</title>
+    <title>나의 통합 미션 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A single-page dashboard is maintained and enhanced with a tabbed interface for the main mission area. This allows the user to focus on one goal at a time (TOEIC, Project/Branding, Thesis) while seeing how they fit into the overall daily schedule. This structure prevents overwhelm by compartmentalizing tasks, yet keeps everything accessible on one screen, reinforcing the idea of an integrated, balanced routine. -->
+    <!-- Visualization & Content Choices: 1. Multi-Goal Plan -> Goal: Organize daily tasks for 3 goals -> Presentation: Interactive Tabbed Cards -> Interaction: Click tabs (TOEIC, Project, Thesis) to switch content -> Justification: Provides focused view for each goal, reducing cognitive load. (HTML/JS). 2. Daily Routine -> Goal: Track daily completion -> Presentation: Interactive Checklist -> Interaction: Click checkbox to mark as complete (strikethrough) -> Justification: Provides tangible sense of accomplishment. (HTML/JS). 3. Future Vision -> Goal: Motivate user with future outcomes -> Presentation: Visually engaging info cards with icons -> Interaction: None -> Justification: Replaces data chart with stronger emotional motivation. (HTML/Tailwind). -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .mission-content {
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+        .fade-out {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        .fade-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .tab-btn.active {
+            background-color: #d97706;
             color: white;
-            text-align: center;
         }
-        .container {
-            background: rgba(255,255,255,0.1);
-            padding: 2rem;
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-        }
-        .btn {
-            background: white;
-            color: #667eea;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            margin: 0.5rem;
+        .tab-btn:not(.active) {
+            background-color: #f5f5f4;
+            color: #57534e;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>🚀 GitHub API 업로드 테스트</h1>
-        <p>이 페이지는 GitHub API를 통해 자동으로 업로드되었습니다!</p>
-        <p>생성 시간: <span id="time"></span></p>
-        <button class="btn" onclick="alert('Hello from GitHub Pages!')">클릭 테스트</button>
+<body class="bg-stone-50 text-stone-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-amber-600 mb-2">나의 통합 미션 대시보드</h1>
+            <p class="text-lg text-stone-600">세 가지 목표를 향한 오늘의 항해를 시작합니다.</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <section class="lg:col-span-2 space-y-8">
+                <article id="daily-mission" class="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-bold mb-4 text-stone-700">오늘의 트리플 미션</h2>
+                    <div class="flex flex-wrap gap-2 mb-6">
+                         <span class="font-semibold mr-2">요일 선택:</span>
+                        <div id="day-selector" class="flex flex-wrap gap-2">
+                            <button data-day="weekday" class="day-btn px-4 py-2 text-sm rounded-full transition-all duration-300">주중 (월-금)</button>
+                            <button data-day="weekend" class="day-btn px-4 py-2 text-sm rounded-full transition-all duration-300">주말 (토/일)</button>
+                        </div>
+                    </div>
+                    
+                    <div id="mission-tabs" class="mb-4 border-b border-stone-200">
+                        <nav class="flex -mb-px space-x-4">
+                            <button data-mission="toeic" class="tab-btn whitespace-nowrap py-3 px-4 border-b-2 border-transparent font-medium text-sm transition-colors duration-300">🚀 토익 정복</button>
+                            <button data-mission="branding" class="tab-btn whitespace-nowrap py-3 px-4 border-b-2 border-transparent font-medium text-sm transition-colors duration-300">💡 프로젝트 & 브랜딩</button>
+                            <button data-mission="thesis" class="tab-btn whitespace-nowrap py-3 px-4 border-b-2 border-transparent font-medium text-sm transition-colors duration-300">✍️ 논문 마스터</button>
+                        </nav>
+                    </div>
+
+                    <div id="mission-card" class="bg-stone-100 p-6 rounded-lg min-h-[300px] mission-content">
+                        <h3 id="mission-title" class="text-xl font-bold text-amber-700 mb-3"></h3>
+                        <p id="mission-subtitle" class="text-sm text-stone-500 mb-4"></p>
+                        <ul id="mission-list" class="space-y-3"></ul>
+                    </div>
+                </article>
+
+            </section>
+
+            <aside class="lg:col-span-1 space-y-8">
+                <article class="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-bold mb-4 text-stone-700">오늘의 미션 체크리스트</h2>
+                    <div id="daily-checklist" class="space-y-3"></div>
+                </article>
+                
+                <article class="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-bold mb-4 text-stone-700">8주 후, 당신의 모습</h2>
+                     <div class="space-y-5">
+                        <div class="flex items-center gap-4 p-4 bg-amber-50 rounded-lg">
+                            <div class="text-3xl">🎓</div>
+                            <div>
+                                <h3 class="font-bold text-amber-800">졸업 요건 달성 & 자신감</h3>
+                                <p class="text-sm text-amber-700">가뿐하게 700점을 넘어, 당당하게 졸업을 맞이합니다.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 p-4 bg-purple-50 rounded-lg">
+                            <div class="text-3xl">🚀</div>
+                            <div>
+                                <h3 class="font-bold text-purple-800">나만의 포트폴리오 & 새로운 기회</h3>
+                                <p class="text-sm text-purple-700">세상에 내놓은 프로젝트로 새로운 커리어의 문을 엽니다.</p>
+                            </div>
+                        </div>
+                         <div class="flex items-center gap-4 p-4 bg-blue-50 rounded-lg">
+                            <div class="text-3xl">✍️</div>
+                            <div>
+                                <h3 class="font-bold text-blue-800">논문 통과 & 진정한 전문가</h3>
+                                <p class="text-sm text-blue-700">연구의 결실을 맺고, 한 분야의 전문가로 인정받습니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </aside>
+        </main>
+        
+        <footer class="text-center mt-12 py-6 border-t border-stone-200">
+            <p class="text-sm text-stone-500">&copy; 2025 Your Personal Career Coach. All Rights Reserved.</p>
+        </footer>
     </div>
-    
+
     <script>
-        document.getElementById('time').textContent = new Date().toLocaleString('ko-KR');
+        const planData = {
+            weekday: {
+                toeic: {
+                    title: "토익 집중 훈련",
+                    subtitle: "매일 60-90분, 깊이 있는 분석으로 점수를 만듭니다.",
+                    tasks: [
+                        { icon: '🎧', time: '20분', name: 'LC 감각 유지 훈련', detail: '파트 2 또는 3/4 지문 1개 딕테이션 또는 쉐도잉.' },
+                        { icon: '✍️', time: '40분', name: 'RC 약점 집중 공략', detail: '파트 5/6 20문제 풀고 \'분석노트\' 작성.' },
+                        { icon: '📖', time: '15분', name: '나만의 단어장 만들기', detail: '오늘 분석한 RC 문제의 모든 모르는 단어 정리.' }
+                    ]
+                },
+                branding: {
+                    title: "프로젝트 & 브랜딩",
+                    subtitle: "매일 15분, 나의 성장 과정을 기록하고 공유합니다.",
+                    tasks: [
+                        { icon: '📸', time: '5분', name: '순간 포착', detail: '오늘 개발한 부분의 스크린샷 1장 또는 짧은 영상 기록.' },
+                        { icon: '✒️', time: '10분', name: '성장 일지 작성', detail: '오늘의 성과, 마주한 문제, 해결 과정, 느낀 점을 2~3문장으로 요약.' },
+                        { icon: '🌐', time: '5분', name: '세상에 공유', detail: '정해둔 블로그나 SNS에 부담 없이 게시. 완벽함보다 꾸준함이 중요!' }
+                    ]
+                },
+                thesis: {
+                    title: "논문 마스터",
+                    subtitle: "매일 뽀모도로 2세트, 거대한 산을 한 걸음씩 옮깁니다.",
+                    tasks: [
+                        { icon: '🍅', time: '25분', name: '뽀모도로 #1 (집중)', detail: '오늘의 작은 목표 하나에만 완전 몰입 (ex. 참고문헌 2개 요약, 서론 한 문단 작성)' },
+                        { icon: '☕', time: '5분', name: '휴식', detail: '자리에서 일어나 스트레칭하며 뇌에 휴식을 주기.' },
+                        { icon: '🍅', time: '25분', name: '뽀모도로 #2 (집중)', detail: '다음 작은 목표 하나에 다시 완전 몰입.' }
+                    ]
+                }
+            },
+            weekend: {
+                 toeic: {
+                    title: "토익 실전 감각 훈련",
+                    subtitle: "실전 감각을 극대화하고, 다음 주의 전략을 세웁니다.",
+                    tasks: [
+                        { icon: '⏱️', time: '2시간', name: '실전 모의고사', detail: '실제 시험 환경과 동일하게 LC/RC 1세트 풀기.' },
+                        { icon: '📊', time: '1시간+', name: '오답 분석 및 전략 수정', detail: '틀린 문제의 \'유형\'을 분석하고 다음 주 학습 계획에 반영.' }
+                    ]
+                },
+                branding: {
+                    title: "프로젝트 & 브랜딩",
+                    subtitle: "주간 회고를 통해 성장의 발자취를 정리합니다.",
+                    tasks: [
+                        { icon: '📈', time: '30분', name: '주간 개발 회고', detail: '이번 주 진행 상황을 정리하고, 다음 주 개발 목표 설정.' },
+                        { icon: '💡', time: '30분', name: '인사이트 공유', detail: '한 주간의 개발 경험에서 얻은 기술적/개인적 인사이트를 담은 조금 더 깊이 있는 글 작성.' }
+                    ]
+                },
+                thesis: {
+                    title: "논문 마스터",
+                    subtitle: "주말 집중 시간을 활용해 논문의 큰 그림을 그립니다.",
+                    tasks: [
+                        { icon: '🗺️', time: '자유롭게', name: '주간 목표 설정', detail: '다음 주에 달성할 논문 관련 목표를 구체적으로 설정 (ex. 2장 초고 완성).' },
+                        { icon: '🧠', time: '2-3시간', name: '집중 연구/집필', detail: '평일에 하기 어려웠던 깊은 리서치나 연속적인 글쓰기 진행.' }
+                    ]
+                }
+            }
+        };
+
+        let currentState = {
+            day: 'weekday',
+            mission: 'toeic'
+        };
+
+        const daySelector = document.getElementById('day-selector');
+        const missionTabs = document.getElementById('mission-tabs');
+        const missionCard = document.getElementById('mission-card');
+        const missionTitle = document.getElementById('mission-title');
+        const missionSubtitle = document.getElementById('mission-subtitle');
+        const missionList = document.getElementById('mission-list');
+        const checklistContainer = document.getElementById('daily-checklist');
+
+        function renderChecklist() {
+            const dayData = planData[currentState.day];
+            let checklistHTML = '';
+            
+            const missionOrder = currentState.day === 'weekday' ? ['thesis', 'toeic', 'branding'] : ['toeic', 'thesis', 'branding'];
+            const missionIcons = { thesis: '✍️', toeic: '🚀', branding: '💡' };
+
+            for (const mission of missionOrder) {
+                if (dayData[mission]) {
+                    checklistHTML += `<h4 class="font-semibold text-stone-600 pt-2 first:pt-0">${missionIcons[mission]} ${dayData[mission].title}</h4>`;
+                    dayData[mission].tasks.forEach(task => {
+                        checklistHTML += `
+                        <label class="flex items-center p-3 bg-stone-100 rounded-md hover:bg-stone-200 transition-colors duration-200 cursor-pointer">
+                            <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-amber-600 focus:ring-amber-500">
+                            <span class="ml-3 text-stone-700 transition-colors duration-200">${task.name}</span>
+                        </label>
+                        `;
+                    });
+                }
+            }
+            checklistContainer.innerHTML = checklistHTML;
+        }
+
+        function updateDisplay() {
+            const missionData = planData[currentState.day][currentState.mission];
+            
+            missionCard.classList.add('fade-out');
+
+            setTimeout(() => {
+                missionTitle.textContent = missionData.title;
+                missionSubtitle.textContent = missionData.subtitle;
+                missionList.innerHTML = missionData.tasks.map(task => `
+                    <li class="flex items-start gap-4 p-3 bg-white rounded-md">
+                        <div class="text-2xl">${task.icon}</div>
+                        <div>
+                            <p class="font-semibold text-stone-800">${task.time} | ${task.name}</p>
+                            <p class="text-sm text-stone-600">${task.detail}</p>
+                        </div>
+                    </li>
+                `).join('');
+                
+                missionCard.classList.remove('fade-out');
+            }, 300);
+
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                btn.classList.toggle('bg-amber-600', btn.dataset.day === currentState.day);
+                btn.classList.toggle('text-white', btn.dataset.day === currentState.day);
+                btn.classList.toggle('bg-stone-200', btn.dataset.day !== currentState.day);
+                btn.classList.toggle('text-stone-700', btn.dataset.day !== currentState.day);
+            });
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mission === currentState.mission);
+                if (btn.dataset.mission === currentState.mission) {
+                    btn.classList.remove('border-transparent');
+                    btn.classList.add('border-amber-600');
+                } else {
+                    btn.classList.add('border-transparent');
+                    btn.classList.remove('border-amber-600');
+                }
+            });
+            renderChecklist();
+        }
+        
+        function setupControls() {
+            daySelector.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    currentState.day = e.target.day;
+                    updateDisplay();
+                }
+            });
+
+            missionTabs.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    currentState.mission = e.target.dataset.mission;
+                    updateDisplay();
+                }
+            });
+
+            checklistContainer.addEventListener('change', (e) => {
+                if (e.target.type === 'checkbox') {
+                    const label = e.target.closest('label');
+                    const span = label.querySelector('span');
+                    span.classList.toggle('line-through', e.target.checked);
+                    span.classList.toggle('text-stone-400', e.target.checked);
+                }
+            });
+        }
+
+        window.onload = () => {
+            setupControls();
+            updateDisplay();
+        };
     </script>
-<!-- Code injected by live-server -->
-<script>
-	// <![CDATA[  <-- For SVG support
-	if ('WebSocket' in window) {
-		(function () {
-			function refreshCSS() {
-				var sheets = [].slice.call(document.getElementsByTagName("link"));
-				var head = document.getElementsByTagName("head")[0];
-				for (var i = 0; i < sheets.length; ++i) {
-					var elem = sheets[i];
-					var parent = elem.parentElement || head;
-					parent.removeChild(elem);
-					var rel = elem.rel;
-					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
-						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
-						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
-					}
-					parent.appendChild(elem);
-				}
-			}
-			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
-			var address = protocol + window.location.host + window.location.pathname + '/ws';
-			var socket = new WebSocket(address);
-			socket.onmessage = function (msg) {
-				if (msg.data == 'reload') window.location.reload();
-				else if (msg.data == 'refreshcss') refreshCSS();
-			};
-			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
-				console.log('Live reload enabled.');
-				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
-			}
-		})();
-	}
-	else {
-		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
-	}
-	// ]]>
-</script>
 </body>
 </html>
